@@ -1,8 +1,8 @@
-require "test_utils"
+require "spec_helper"
 require "logstash/filters/cidr"
 
 describe LogStash::Filters::CIDR do
-  extend LogStash::RSpec
+  
 
   describe "IPV4 match test" do
     config <<-CONFIG
