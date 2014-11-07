@@ -15,7 +15,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   milestone 1
 
   # The IP address(es) to check with. Example:
-  #
+  # [source,ruby]
   #     filter {
   #       %PLUGIN% {
   #         add_tag => [ "testnet" ]
@@ -26,7 +26,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   config :address, :validate => :array, :default => []
 
   # The IP network(s) to check against. Example:
-  #
+  # [source,ruby]
   #     filter {
   #       %PLUGIN% {
   #         add_tag => [ "linklocal" ]
