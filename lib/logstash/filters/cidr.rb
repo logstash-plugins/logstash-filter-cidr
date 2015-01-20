@@ -12,7 +12,6 @@ require "ipaddr"
 class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   config_name "cidr"
-  milestone 1
 
   # The IP address(es) to check with. Example:
   # [source,ruby]
