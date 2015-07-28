@@ -54,54 +54,20 @@ describe LogStash::Filters::CIDR do
     sample("clientip" => "192.168.0.30") do
       insist { subject["tags"] }.include?("matched") 
     end
-  end
-
-  describe "IPV4 match, passing a list to network [10.10.220.3]" do
-   config <<-CONFIG
-       filter {
-        cidr {
-          address => [ "%{clientip}"]
-          network => [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
-          add_tag => [ "matched" ]
-        }
-      }
-    CONFIG
 
     sample("clientip" => "10.10.220.3") do
       insist { subject["tags"] }.include?("matched") 
     end
-  end
-
-  describe "IPV4 match, passing a list to network [172.16.45.50]" do
-   config <<-CONFIG
-       filter {
-        cidr {
-          address => [ "%{clientip}"]
-          network => [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
-          add_tag => [ "matched" ]
-        }
-      }
-    CONFIG
 
     sample("clientip" => "172.16.45.50") do
       insist { subject["tags"] }.include?("matched") 
     end
-  end
 
-  describe "IPV4 match, passing a list to network [8.8.8.8] no match" do
-   config <<-CONFIG
-       filter {
-        cidr {
-          address => [ "%{clientip}"]
-          network => [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
-          add_tag => [ "matched" ]
-        }
-      }
-    CONFIG
-
+    # No match
     sample("clientip" => "8.8.8.8") do
       insist { subject["tags"] }.nil?
     end
+
   end
 
   # IPV6
