@@ -120,7 +120,11 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     if ( @ipusesprintf or @ipeventfields )
       address = @address.collect do |a|
         begin
-          IPAddr.new(event.sprintf(a))
+          if @ipeventfield
+            IPAddr.new(event[a])
+          else
+            IPAddr.new(event.sprintf(a))
+          end
         rescue ArgumentError => e
           @logger.warn("Invalid IP address, skipping", :address => a, :event => event)
           nil
@@ -134,7 +138,11 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     if ( @netusesprintf or @neteventfields )
       network = @network.collect do |n|
         begin
-          IPAddr.new(event.sprintf(n))
+          if @neteventfields
+            IPAddr.new(event[n])
+          else
+            IPAddr.new(event.sprintf(n))
+          end
         rescue ArgumentError => e
           @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
           nil
