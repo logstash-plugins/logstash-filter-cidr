@@ -12,7 +12,9 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   config_name "cidr"
 
-  # The IP address(es) to check with. Example:
+  # The IP address(es) to check with.
+  # Example:
+  #
   # [source,ruby]
   #     filter {
   #       %PLUGIN% {
@@ -21,9 +23,11 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #         network => [ "192.0.2.0/24" ]
   #       }
   #     }
+  #
   config :address, :validate => :array, :default => []
 
-  # The IP network(s) to check against. Example:
+  # The IP network(s) to check against.
+  #
   # [source,ruby]
   #     filter {
   #       %PLUGIN% {
@@ -32,8 +36,54 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #         network => [ "169.254.0.0/16", "fe80::/64" ]
   #       }
   #     }
+  #
   config :network, :validate => :array, :default => []
 
+  # Are the fields in the address array fields in the event?
+  # This will look for a element 'clientip' in the event. This
+  # reduces the load if an IP is already stored in an eventfield.
+  # 
+  # [source,ruby]
+  #     filter {
+  #       %PLUGIN% {
+  #         add_tag => [ "linklocal" ]
+  #         ipeventfield => true
+  #         address => [ "clientip" ]
+  #         network => [ "%{somenet}/%{netmask}", "169.254.0.0/16", "fe80::/64" ]
+  #       }
+  #     }
+  #
+  config :ipeventfield, :validate => :boolean, :default => false
+  
+  # Are the fields in the network array names of fields in the event?
+  # This will look for a field in the event with the given name. This
+  # reduces the load if an IP is already stored in an eventfield
+  #
+  # [source,ruby]
+  #     filter {
+  #       %PLUGIN% {
+  #         add_tag => [ "linklocal" ]
+  #         neteventfield => true
+  #         address => [ "%{clientip}" ]
+  #         network => [ "ipv4net", "ipv4nettwo", "ipv6net" ]
+  #       }
+  #     }
+  #
+  config :neteventfields, :validate => :boolean, :default => false
+
+  # If the ipeventfiled is set to false, strings like 
+  # '%{firstbyte}.%{secondbyte}...' in the address array will be not
+  # interpreted and used as provided.
+  #
+  config :ipusesprintf, :validate => :boolean, :default => true
+
+  # If the neteventfiled is set to false, strings like
+  # '%{network}/%{netmask}' in the network array not will be interpreted
+  # and used as provided
+  #
+  config :netusesprintf, :validate => :boolean, :default => true
+  
+       
   public
   def register
     require "ipaddr"
