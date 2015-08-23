@@ -71,15 +71,15 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #
   config :neteventfields, :validate => :boolean, :default => false
 
-  # If the ipeventfiled is set to false, shall interprete strings
-  # like '%{firstbyte}.%{secondbyte}...' in the address array or use
-  # them as provided?
+  # If the ipeventfiled is set to false, strings like 
+  # '%{firstbyte}.%{secondbyte}...' in the address array will be not
+  # interpreted and used as provided.
   #
   config :ipusesprintf, :validate => :boolean, :default => true
 
-  # If the neteventfiled is set to false, shall interprete strings
-  # like '%{network}/%{netmask}' in the network array, or use them
-  # as provided?
+  # If the neteventfiled is set to false, strings like
+  # '%{network}/%{netmask}' in the network array not will be interpreted
+  # and used as provided
   #
   config :netusesprintf, :validate => :boolean, :default => true
   
