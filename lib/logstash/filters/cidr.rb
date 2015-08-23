@@ -53,7 +53,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #       }
   #     }
   #
-  config :ipeventfield, :validate => :boolean, default => false
+  config :ipeventfield, :validate => :boolean, :default => false
   
   # Are the fields in the network array names of fields in the event?
   # This will look for a field in the event with the given name. This
@@ -69,19 +69,19 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #       }
   #     }
   #
-  config :neteventfields, :validate => :boolean, default => false
+  config :neteventfields, :validate => :boolean, :default => false
 
   # If the ipeventfiled is set to false, shall interprete strings
   # like '%{firstbyte}.%{secondbyte}...' in the address array or use
   # them as provided?
   #
-  config :ipusesprintf, :validate => :boolean, default => true
+  config :ipusesprintf, :validate => :boolean, :default => true
 
   # If the neteventfiled is set to false, shall interprete strings
   # like '%{network}/%{netmask}' in the network array, or use them
   # as provided?
   #
-  config :netusesprintf, :validate => :boolean, default => true
+  config :netusesprintf, :validate => :boolean, :default => true
   
        
   public
