@@ -1,0 +1,36 @@
+{
+          "@version" => "1",
+        "@timestamp" => "2015-08-23T10:17:15.385Z",
+           "message" => "bounty",
+       "local.count" => 200000,
+     "local.rate_1m" => 859.7573466119749,
+     "local.rate_5m" => 519.6963956327068,
+    "local.rate_15m" => 288.7617077793459,
+              "tags" => [
+        [0] "metric"
+    ]
+}
+{
+           "@version" => "1",
+         "@timestamp" => "2015-08-23T10:17:15.385Z",
+            "message" => "bounty",
+       "remote.count" => 200000,
+     "remote.rate_1m" => 859.7706376228039,
+     "remote.rate_5m" => 519.7045327438203,
+    "remote.rate_15m" => 288.7648296704352,
+               "tags" => [
+        [0] "metric"
+    ]
+}
+{
+           "@version" => "1",
+         "@timestamp" => "2015-08-23T10:17:15.386Z",
+            "message" => "bounty",
+       "events.count" => 200000,
+     "events.rate_1m" => 859.7473687916951,
+     "events.rate_5m" => 519.869655413091,
+    "events.rate_15m" => 289.0698261504266,
+               "tags" => [
+        [0] "metric"
+    ]
+}
