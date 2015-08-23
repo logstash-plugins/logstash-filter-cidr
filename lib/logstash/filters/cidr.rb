@@ -87,31 +87,63 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   public
   def register
     require "ipaddr"
+    # use pre allocated array if it is a constant value in the config
+    if not ( @netusesprintf or @neteventfields)
+      begin 
+        @network.collect! do |n|
+          IPAddr.new(n)
+        end
+      rescue
+        @logger.warn("Invalid IP network, skipping", :network => n)
+      end
+      @network.compact!
+    end # end of static values
+
+    # use pre allocated array if it is a constant value in the config
+    if not ( @ipusesprintf or @ipeventfields)
+      begin 
+        @address.collect! do |a|
+          IPAddr.new(a)
+        end
+      rescue
+        @logger.warn("Invalid IP, skipping", :address => a)
+      end
+      @address.compact!
+    end # end of static values
+
   end # def register
 
   public
   def filter(event)
     return unless filter?(event)
-
-    address = @address.collect do |a|
-      begin
-        IPAddr.new(event.sprintf(a))
-      rescue ArgumentError => e
-        @logger.warn("Invalid IP address, skipping", :address => a, :event => event)
-        nil
+    # static values
+    if ( @ipusesprintf or @ipeventfields )
+      address = @address.collect do |a|
+        begin
+          IPAddr.new(event.sprintf(a))
+        rescue ArgumentError => e
+          @logger.warn("Invalid IP address, skipping", :address => a, :event => event)
+          nil
+        end
       end
+      address.compact!
+    else
+      address = @address
     end
-    address.compact!
 
-    network = @network.collect do |n|
-      begin
-        IPAddr.new(event.sprintf(n))
-      rescue ArgumentError => e
-        @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
-        nil
+    if ( @netusesprintf or @neteventfields )
+      network = @network.collect do |n|
+        begin
+          IPAddr.new(event.sprintf(n))
+        rescue ArgumentError => e
+          @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
+          nil
+        end
       end
+      network.compact!
+    else
+      network = @network
     end
-    network.compact!
 
     # Try every combination of address and network, first match wins
     address.product(network).each do |a, n|
