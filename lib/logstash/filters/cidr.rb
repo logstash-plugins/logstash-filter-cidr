@@ -1,7 +1,6 @@
 # encoding: utf-8
 require "logstash/filters/base"
 require "logstash/namespace"
-require "ipaddr"
 
 
 # The CIDR filter is for checking IP addresses in events against a list of
@@ -37,7 +36,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   public
   def register
-    # Nothing
+    require "ipaddr"
   end # def register
 
   public
