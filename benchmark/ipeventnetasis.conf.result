@@ -1,35 +1,42 @@
+# time taskset -c 0,1 ./bin/logstash -f ipeventnetasis.conf --quiet > foo.log
+
+real	2m53.473s
+user	3m46.797s
+sys	0m8.253s
+
+# tail -n 36 foo.log
 {
           "@version" => "1",
-        "@timestamp" => "2015-08-23T10:31:25.871Z",
+        "@timestamp" => "2015-08-23T14:01:32.984Z",
            "message" => "bounty",
        "local.count" => 400000,
-     "local.rate_1m" => 1137.0038833978415,
-     "local.rate_5m" => 848.3582817972232,
-    "local.rate_15m" => 512.9561705796934,
+     "local.rate_1m" => 2495.7992521669203,
+     "local.rate_5m" => 1412.5438514003094,
+    "local.rate_15m" => 938.6560338213166,
               "tags" => [
         [0] "metric"
     ]
 }
 {
            "@version" => "1",
-         "@timestamp" => "2015-08-23T10:31:25.871Z",
+         "@timestamp" => "2015-08-23T14:01:32.984Z",
             "message" => "bounty",
-       "remote.count" => 400000,
-     "remote.rate_1m" => 1136.9982461771906,
-     "remote.rate_5m" => 848.3503406773166,
-    "remote.rate_15m" => 512.953787515836,
+       "remote.count" => 200000,
+     "remote.rate_1m" => 1247.8455923917188,
+     "remote.rate_5m" => 706.2985928635593,
+    "remote.rate_15m" => 469.39902333657113,
                "tags" => [
         [0] "metric"
     ]
 }
 {
            "@version" => "1",
-         "@timestamp" => "2015-08-23T10:31:25.871Z",
+         "@timestamp" => "2015-08-23T14:01:32.984Z",
             "message" => "bounty",
-       "events.count" => 400000,
-     "events.rate_1m" => 1137.0249062607568,
-     "events.rate_5m" => 848.2973216125087,
-    "events.rate_15m" => 512.822051848885,
+       "events.count" => 200000,
+     "events.rate_1m" => 1247.9164127535507,
+     "events.rate_5m" => 706.2189507117404,
+    "events.rate_15m" => 469.2460740442456,
                "tags" => [
         [0] "metric"
     ]
