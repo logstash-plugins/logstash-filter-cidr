@@ -114,10 +114,11 @@ sys	0m19.023s
 "local.rate_5m" => 964.8029165471421,
 "remote.rate_5m" => 482.37929835267477,
 "no_an_ip.rate_5m" => 482.6969924754552,
+```
 
 ### ipeventnetasis.conf
 
-Output of time:
+Output of ```time```:
 ```
 real	4m14.988s
 user	7m53.913s
