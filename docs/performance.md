@@ -68,6 +68,7 @@ The generator did produce 800,000 messages. Where 50% are local ips, 25% are rem
 
 ## Results:
 
+Depending on your configuration performance can be improved. The used examples gives round about 5% higher rates if the ip or net is directly stored in an eventfield and the plugin is informed about this. Using static values for network or address provides an additional speedup of about 25%
 
 ### noopti.conf
 
@@ -123,18 +124,19 @@ user	7m53.913s
 sys	0m16.950s
 ```
 
-1 minute rate:
+1 minute rates:
 ```
 "local.rate_1m" => 1703.012042927653,
 "remote.rate_1m" => 851.5016401218863,
 "not_an_ip.rate_1m" => 851.5037681137894,
 ```
 
-
+5 minutes rates:
 ```
 "local.rate_5m" => 1108.284932966118,
 "remote.rate_5m" => 554.0214334265335,
 "not_an_ip.rate_5m" => 554.0171842930413,
 ```
 
-## Conclusion
+
+
