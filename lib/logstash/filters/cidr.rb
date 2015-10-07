@@ -42,7 +42,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   public
   def filter(event)
-    return unless filter?(event)
+    
 
     address = @address.collect do |a|
       begin
