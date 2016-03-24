@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
 
   s.name            = 'logstash-filter-cidr'
-  s.version         = '2.0.3'
+  s.version         = '2.0.4'
   s.licenses        = ['Apache License (2.0)']
   s.summary         = "The CIDR filter is for checking IP addresses in events against a list of network blocks that might contain it."
   s.description     = "This gem is a logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/plugin install gemname. This gem is not a stand-alone program"
@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
   s.metadata = { "logstash_plugin" => "true", "logstash_group" => "filter" }
 
   # Gem dependencies
-  s.add_runtime_dependency "logstash-core", ">= 2.0.0", "< 6.0.0.alpha1"
+  s.add_runtime_dependency "logstash-core-plugin-api", "~> 1.0"
 
   s.add_development_dependency 'logstash-devutils'
 end
