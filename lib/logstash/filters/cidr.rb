@@ -42,8 +42,6 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   public
   def filter(event)
-    
-
     address = @address.collect do |a|
       begin
         IPAddr.new(event.sprintf(a))

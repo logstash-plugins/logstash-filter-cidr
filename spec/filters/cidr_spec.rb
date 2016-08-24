@@ -2,9 +2,8 @@ require "logstash/devutils/rspec/spec_helper"
 require "logstash/filters/cidr"
 
 describe LogStash::Filters::CIDR do
-  
+
   # IPV4
-  
   describe "IPV4 match test" do
     config <<-CONFIG
       filter {
@@ -17,7 +16,7 @@ describe LogStash::Filters::CIDR do
     CONFIG
 
     sample("clientip" => "192.168.0.30") do
-      insist { subject["tags"] }.include?("matched") 
+      insist { subject.get("tags") }.include?("matched") 
     end
   end
 
@@ -33,10 +32,10 @@ describe LogStash::Filters::CIDR do
     CONFIG
 
     sample("clientip" => "123.52.122.33") do
-       insist { subject["tags"] }.nil?
+       insist { subject.get("tags") }.nil?
     end
   end
- 
+
   # Test multple CIDR blocks passed into 'network'.  Make sure we try an
   # IP in every range.
 
@@ -52,20 +51,20 @@ describe LogStash::Filters::CIDR do
     CONFIG
 
     sample("clientip" => "192.168.0.30") do
-      insist { subject["tags"] }.include?("matched") 
+      insist { subject.get("tags") }.include?("matched")
     end
 
     sample("clientip" => "10.10.220.3") do
-      insist { subject["tags"] }.include?("matched") 
+      insist { subject.get("tags") }.include?("matched")
     end
 
     sample("clientip" => "172.16.45.50") do
-      insist { subject["tags"] }.include?("matched") 
+      insist { subject.get("tags") }.include?("matched")
     end
 
     # No match
     sample("clientip" => "8.8.8.8") do
-      insist { subject["tags"] }.nil?
+      insist { subject.get("tags") }.nil?
     end
 
   end
@@ -84,7 +83,7 @@ describe LogStash::Filters::CIDR do
     CONFIG
 
     sample("clientip" => "fe80:0:0:0:0:0:0:1") do
-      insist { subject["tags"] }.include?("matched") 
+      insist { subject.get("tags") }.include?("matched")
     end
   end
 
@@ -100,7 +99,7 @@ describe LogStash::Filters::CIDR do
     CONFIG
 
     sample("clientip" => "fd82:0:0:0:0:0:0:1") do
-       insist { subject["tags"] }.nil?
+       insist { subject.get("tags") }.nil?
     end
   end
 
