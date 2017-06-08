@@ -103,4 +103,34 @@ describe LogStash::Filters::CIDR do
     end
   end
 
+  #Test loading network list from a file
+  describe "Load network list from file" do
+
+    #let(:network_path)  { File.join(File.dirname(__FILE__), "..", "files", "network") }
+
+    config <<-CONFIG
+      filter{
+	cidr{
+         network_path => "/home/vrcjunes/logstash-filter-cidr/spec/files/network"
+         address => [ "%{clientip}" ]
+         add_tag => [ "matched" ]
+        }
+      }
+    CONFIG
+    
+
+    sample("clientip" => "192.168.1.30") do #must match
+      insist { subject.get("tags") }.include?("matched") 
+    end
+
+    sample("clientip" => "192.168.2.25") do #must match
+      insist { subject.get("tags") }.include?("matched")
+    end
+
+
+    sample("clientip" => "192.168.0.30") do #no match
+      insist { subject.get("tags") }.nil?
+    end
+  end
+
 end

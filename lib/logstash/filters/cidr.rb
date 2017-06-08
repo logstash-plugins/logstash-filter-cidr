@@ -48,41 +48,20 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   public
   def register #This portion of code has been borrowed from logstash-filter-translate
-    rw_lock = java.util.concurrent.locks.ReentrantReadWriteLock.new
-    @read_lock = rw_lock.readLock
     
-    if @dictionary_path
+    if @network_path
       @next_refresh = Time.now + @refresh_interval
-      raise_exception = true
-      lock_for_write { load_file(raise_exception) }
+      load_file
     end
   end # def register
-
-  def lock_for_read
-    @read_lock.lock
-    begin
-      yield
-    ensure
-      @read_lock.unlock
-    end
-  end
-
-  def lock_for_write
-    @write_lock.lock
-    begin
-      yield
-    ensure
-      @write_lock.unlock
-    end
-  end
 
   def needs_refresh()
     @next_refresh < Time.now
   end
 
-  public 
   def load_file()
     @network = File.open(@network_path,"r") {|file| file.read.split(@separator)}
+  end
 
   public
   def filter(event)
@@ -96,17 +75,19 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     end
     address.compact!
 
-    if @network_path #case we are getting networks from a file
-      if needs_refresh?
+    if @network_path #in case we are getting networks from a file
+      if needs_refresh
         load_file
       end
+
       network = @network.collect do |n|
-      begin
+      	begin
           IPAddr.new(n)
-      rescue ArgumentError => e
-        @logger.warn("")
+      	rescue ArgumentError => e
+          @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
+      	end
       end
-    else
+   else
       network = @network.collect do |n|
         begin
           IPAddr.new(event.sprintf(n))
@@ -115,6 +96,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
           nil
         end
       end
+    end
     network.compact!
 
     # Try every combination of address and network, first match wins
