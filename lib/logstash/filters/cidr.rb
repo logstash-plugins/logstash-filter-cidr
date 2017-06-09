@@ -3,7 +3,6 @@ require "logstash/filters/base"
 require "logstash/namespace"
 require "ipaddr"
 
-
 # The CIDR filter is for checking IP addresses in events against a list of
 # network blocks that might contain it. Multiple addresses can be checked
 # against multiple networks, any match succeeds. Upon success additional tags
@@ -36,32 +35,76 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #     }
   config :network, :validate => :array, :default => []
 
-  #Where the file containing the IP masks
+  # The full path of the external file containing the IP network(s) to check against. Example:
+  # [source,ruby]
+  #     filter {
+  #       %PLUGIN% {
+  #         add_tag => [ "linklocal" ]
+  #         address => [ "%{clientip}" ]
+  #         network_path => "/etc/logstash/networks"
+  #       }
+  #     }
+  # NOTE: it is an error to specify both 'network' and 'network_path'.
   config :network_path, :validate => :path
 
+  # The separator character used in the encoding of the external file pointed by network_path.
   config :separator,:validate => :string, :default => "\n"
 
-  # When using a file, this setting will indicate how frequently
-  # (in seconds) logstash will check the dictionary file for updates.
+  # When using a network list from a file, this setting will indicate how frequently
+  # (in seconds) logstash will check the file for updates.
   config :refresh_interval, :validate => :number, :default => 300
 
 
   public
-  def register #This portion of code has been borrowed from logstash-filter-translate
-    
+  def register #This portion of code has been borrowed from logstash-filter-translate    
+    rw_lock = java.util.concurrent.locks.ReentrantReadWriteLock.new
+    @read_lock = rw_lock.readLock
+
+    if @network_path && !@network.empty?
+	raise LogStash::ConfigurationError, I18n.t(
+	"logstash.agent.configuration.invalid_plugin_register",
+	:plugin => "filter",
+	:type => "cidr",
+	:error => "The configuration options 'network' and 'network_path' are mutually exclusive"
+	)
+    end
+ 
     if @network_path
       @next_refresh = Time.now + @refresh_interval
-      load_file
+      lock_for_read { load_file }
     end
   end # def register
 
-  def needs_refresh()
-    @next_refresh < Time.now
+  def lock_for_read #ensuring only one thread updates the network block list
+    @read_lock.lock
+    begin
+      yield
+    ensure
+      @read_lock.unlock
+    end
   end
 
-  def load_file()
-    @network = File.open(@network_path,"r") {|file| file.read.split(@separator)}
-  end
+  def needs_refresh?
+    @next_refresh < Time.now
+  end # def refresh
+
+  def load_file
+    if @network && !File.exists?(@network_path)
+	@logger.warn("file read error, continuing with old version")
+    end
+
+    begin
+	temporary = File.open(@network_path,"r") {|file| file.read.split(@separator)}
+	if !temporary.empty? #ensuring the file was parsed correctly
+	   @network = temporary
+	end
+    rescue
+	if @network
+           @logger.error("an error ocurred while reading the file")
+	else
+
+     
+  end #def load_file
 
   public
   def filter(event)
@@ -76,9 +119,14 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     address.compact!
 
     if @network_path #in case we are getting networks from a file
-      if needs_refresh
-        load_file
+      if needs_refresh?
+        lock_for_read do
+        if needs_refresh?
+	  load_file
+	  @next_refresh = Time.now() + @refresh_interval
+	end
       end
+   end
 
       network = @network.collect do |n|
       	begin
