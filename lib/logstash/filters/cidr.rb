@@ -54,19 +54,18 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   # (in seconds) logstash will check the file for updates.
   config :refresh_interval, :validate => :number, :default => 300
 
-
   public
   def register #This portion of code has been borrowed from logstash-filter-translate    
     rw_lock = java.util.concurrent.locks.ReentrantReadWriteLock.new
     @read_lock = rw_lock.readLock
 
     if @network_path && !@network.empty?
-	raise LogStash::ConfigurationError, I18n.t(
-	"logstash.agent.configuration.invalid_plugin_register",
-	:plugin => "filter",
-	:type => "cidr",
-	:error => "The configuration options 'network' and 'network_path' are mutually exclusive"
-	)
+    	raise LogStash::ConfigurationError, I18n.t(
+    	"logstash.agent.configuration.invalid_plugin_register",
+    	:plugin => "filter",
+    	:type => "cidr",
+    	:error => "The configuration options 'network' and 'network_path' are mutually exclusive"
+    	)
     end
  
     if @network_path
@@ -82,30 +81,35 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     ensure
       @read_lock.unlock
     end
-  end
+  end #define lock_for_read
 
   def needs_refresh?
     @next_refresh < Time.now
-  end # def refresh
+  end # define needs_refresh
 
   def load_file
     if @network && !File.exists?(@network_path)
-	@logger.warn("file read error, continuing with old version")
+      @logger.warn("file read error, continuing with old version")
     end
 
-    begin
-	temporary = File.open(@network_path,"r") {|file| file.read.split(@separator)}
-	if !temporary.empty? #ensuring the file was parsed correctly
-	   @network = temporary
-	end
-    rescue
-	if @network
-           @logger.error("an error ocurred while reading the file")
-	else
-
-     
-  end #def load_file
-
+  begin
+    temporary = File.open(@network_path,"r") {|file| file.read.split(@separator)}
+    if !temporary.empty? #ensuring the file was parsed correctly
+      @network = temporary
+    end
+  rescue
+    if @network
+       @logger.error("Error while opening/parsing the file")
+    else
+      raise LogStash::ConfigurationError, I18n.t(
+      "logstash.agent.configuration.invalid_plugin_register",
+      :plugin => "filter",
+      :type => "cidr",
+      :error => "The file containing the network list is invalid, please check the separator character or permissions for the file."
+      )
+    end
+  end
+ end #def load_file
   public
   def filter(event)
     address = @address.collect do |a|
@@ -122,18 +126,18 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
       if needs_refresh?
         lock_for_read do
         if needs_refresh?
-	  load_file
-	  @next_refresh = Time.now() + @refresh_interval
-	end
+      	  load_file
+      	  @next_refresh = Time.now() + @refresh_interval
+	      end
+        end
       end
-   end
 
       network = @network.collect do |n|
-      	begin
-          IPAddr.new(n)
-      	rescue ArgumentError => e
-          @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
-      	end
+  	   begin
+        IPAddr.new(n)
+  	   rescue ArgumentError => e
+        @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
+  	   end
       end
    else
       network = @network.collect do |n|
@@ -145,7 +149,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
         end
       end
     end
-    network.compact!
+    network.compact! #clean nulls
 
     # Try every combination of address and network, first match wins
     address.product(network).each do |a, n|
