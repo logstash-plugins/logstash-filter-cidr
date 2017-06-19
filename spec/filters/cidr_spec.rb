@@ -3,6 +3,8 @@ require "logstash/filters/cidr"
 
 describe LogStash::Filters::CIDR do
 
+  let(:config) { Hash.new }
+  subject { described_class.new(config) }
   # IPV4
   describe "IPV4 match test" do
     config <<-CONFIG
@@ -102,35 +104,37 @@ describe LogStash::Filters::CIDR do
        insist { subject.get("tags") }.nil?
     end
   end
+  
+  describe "Load network list from a file" do
 
-  #Test loading network list from a file
-  describe "Load network list from file" do
-
-    #let(:network_path)  { File.join(File.dirname(__FILE__), "..", "files", "network") }
-
-    config <<-CONFIG
-      filter{
-	cidr{
-         network_path => "/home/vrcjunes/logstash-filter-cidr/spec/files/network"
-         address => [ "%{clientip}" ]
-         add_tag => [ "matched" ]
-        }
-      }
-    CONFIG
-    
-
-    sample("clientip" => "192.168.1.30") do #must match
-      insist { subject.get("tags") }.include?("matched") 
+    let(:network_path) {File.join(File.dirname(__FILE__), "..","files","network")}
+    let(:config) do
+      "filter { cidr { network_path => \"#{network_path}\" address => \"%{clientip}\" add_tag => \[\"matched\"] }}"
     end
 
-    sample("clientip" => "192.168.2.25") do #must match
+    sample("clientip" => "192.168.1.1") do
       insist { subject.get("tags") }.include?("matched")
     end
 
-
-    sample("clientip" => "192.168.0.30") do #no match
-      insist { subject.get("tags") }.nil?
+    sample("clientip" => "10.1.2.1") do
+      insist { subject.get("tags").nil? }
     end
   end
+  
+  describe "general configuration" do
+    let(:network_path) {File.join(File.dirname(__FILE__), "..","files","network")}
+    let(:config) do
+      {
+        "clientip"       => "192.168.1.1",
+        "network"        => ["192.168.1.0/24"],
+        "network_path"   => network_path,
+        "add_tag"        => ["matched"]
+      }
+    end
 
+    it "raises an exception if both 'network' and 'network_path' are set" do
+      expect { subject.register }.to raise_error(LogStash::ConfigurationError)
+    end
+  end
 end
+
