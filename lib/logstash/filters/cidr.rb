@@ -52,7 +52,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   # When using a network list from a file, this setting will indicate how frequently
   # (in seconds) logstash will check the file for updates.
-  config :refresh_interval, :validate => :number, :default => 300
+  config :refresh_interval, :validate => :number, :default => 600
 
   public
   def register    
