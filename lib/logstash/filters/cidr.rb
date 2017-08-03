@@ -48,7 +48,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   config :network_path, :validate => :path
 
   # The separator character used in the encoding of the external file pointed by network_path.
-  config :separator,:validate => :string, :default => "\n"
+  config :separator, :validate => :string, :default => "\n"
 
   # When using a network list from a file, this setting will indicate how frequently
   # (in seconds) logstash will check the file for updates.
@@ -61,12 +61,12 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     @write_lock = rw_lock.writeLock
 
     if @network_path && !@network.empty? #checks if both network and network path are defined in configuration options
-    	raise LogStash::ConfigurationError, I18n.t(
-    	"logstash.agent.configuration.invalid_plugin_register",
-    	:plugin => "filter",
-    	:type => "cidr",
-    	:error => "The configuration options 'network' and 'network_path' are mutually exclusive"
-    	)
+      raise LogStash::ConfigurationError, I18n.t(
+      "logstash.agent.configuration.invalid_plugin_register",
+      :plugin => "filter",
+      :type => "cidr",
+      :error => "The configuration options 'network' and 'network_path' are mutually exclusive"
+      )
     end
  
     if @network_path
@@ -99,7 +99,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   def load_file
     begin
-      temporary = File.open(@network_path,"r") {|file| file.read.split(@separator)}
+      temporary = File.open(@network_path, "r") {|file| file.read.split(@separator)}
       if !temporary.empty? #ensuring the file was parsed correctly
         @network = temporary
       end
@@ -133,9 +133,9 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
       if needs_refresh?
         lock_for_write do
           if needs_refresh?
-      	    load_file
-      	    @next_refresh = Time.now() + @refresh_interval
-	  end
+            load_file
+            @next_refresh = Time.now() + @refresh_interval
+          end
         end #end lock
       end #end refresh from file
  
@@ -146,6 +146,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
           end
         rescue ArgumentError => e
           @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
+          nil
         end
       end
 

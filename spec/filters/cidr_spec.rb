@@ -107,12 +107,16 @@ describe LogStash::Filters::CIDR do
   
   describe "Load network list from a file" do
 
-    let(:network_path) {File.join(File.dirname(__FILE__), "..","files","network")}
+    let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network")}
     let(:config) do
       "filter { cidr { network_path => \"#{network_path}\" address => \"%{clientip}\" add_tag => \[\"matched\"] }}"
     end
 
     sample("clientip" => "192.168.1.1") do
+      insist { subject.get("tags") }.include?("matched")
+    end
+    
+    sample("clientip" => "200.17.160.201") do
       insist { subject.get("tags") }.include?("matched")
     end
 
@@ -123,7 +127,7 @@ describe LogStash::Filters::CIDR do
    
   describe "Try different separator character" do
 
-    let(:network_path) {File.join(File.dirname(__FILE__), "..","files","network-comma")}
+    let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network-comma")}
     let(:config) do
       "filter { cidr { network_path => \"#{network_path}\" address => \"%{clientip}\" add_tag => \[\"matched\"] separator => \",\" }}"
     end
@@ -139,7 +143,7 @@ describe LogStash::Filters::CIDR do
   end
 
   describe "general configuration" do
-    let(:network_path) {File.join(File.dirname(__FILE__), "..","files","network")}
+    let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network")}
     let(:config) do
       {
         "clientip"       => "192.168.1.1",
