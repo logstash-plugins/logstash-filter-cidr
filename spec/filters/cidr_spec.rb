@@ -3,6 +3,8 @@ require "logstash/filters/cidr"
 
 describe LogStash::Filters::CIDR do
 
+  let(:config) { Hash.new }
+  subject { described_class.new(config) }
   # IPV4
   describe "IPV4 match test" do
     config <<-CONFIG
@@ -102,5 +104,56 @@ describe LogStash::Filters::CIDR do
        insist { subject.get("tags") }.nil?
     end
   end
+  
+  describe "Load network list from a file" do
 
+    let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network")}
+    let(:config) do
+      "filter { cidr { network_path => \"#{network_path}\" address => \"%{clientip}\" add_tag => \[\"matched\"] }}"
+    end
+
+    sample("clientip" => "192.168.1.1") do
+      insist { subject.get("tags") }.include?("matched")
+    end
+    
+    sample("clientip" => "200.17.160.201") do
+      insist { subject.get("tags") }.include?("matched")
+    end
+
+    sample("clientip" => "10.1.2.1") do
+      insist { subject.get("tags").nil? }
+    end
+  end
+   
+  describe "Try different separator character" do
+
+    let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network-comma")}
+    let(:config) do
+      "filter { cidr { network_path => \"#{network_path}\" address => \"%{clientip}\" add_tag => \[\"matched\"] separator => \",\" }}"
+    end
+
+    sample("clientip" => "192.168.1.25") do
+      insist { subject.get("tags").include?("matched")}
+    end
+
+    sample("clientip" => "192.167.1.1") do
+      insist { subject.get("tags").nil? }
+    end
+
+  end
+
+  describe "general configuration" do
+    let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network")}
+    let(:config) do
+      {
+        "clientip"       => "192.168.1.1",
+        "network"        => ["192.168.1.0/24"],
+        "network_path"   => network_path,
+        "add_tag"        => ["matched"]
+      }
+    end
+    it "raises an exception if both 'network' and 'network_path' are set" do
+      expect { subject.register }.to raise_error(LogStash::ConfigurationError)
+    end
+  end
 end

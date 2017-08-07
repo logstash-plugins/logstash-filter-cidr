@@ -35,6 +35,9 @@ This plugin supports the following configuration options plus the <<plugins-{typ
 |Setting |Input type|Required
 | <<plugins-{type}s-{plugin}-address>> |<<array,array>>|No
 | <<plugins-{type}s-{plugin}-network>> |<<array,array>>|No
+| <<plugins-{type}s-{plugin}-network_path>> |a valid filesystem path|No
+| <<plugins-{type}s-{plugin}-separator>> |<<string,string>>|No
+| <<plugins-{type}s-{plugin}-refresh_interval>>| <<number,number>>|No
 |=======================================================================
 
 Also see <<plugins-{type}s-{plugin}-common-options>> for a list of options supported by all
@@ -74,6 +77,37 @@ The IP network(s) to check against. Example:
       }
     }
 
+
+[id="plugins-{type}s-{plugin}-network_path"]
+===== `network_path`
+
+  * Value type is <<path,path>>
+  * There is no default value for this setting.
+
+The full path of the external file containing the networks the filter should check with.
+Networks are separated by a separator character defined in `separator`.
+[source,ruby]
+    192.168.1.0/24
+    192.167.0.0/16	
+NOTE: It is an error to specify both `network` and `network_path`.
+
+[id="plugins-{type}s-{plugin}-separator"]
+===== `separator`
+
+  * Value type is <<string,string>>
+  * Default value is `\n`
+
+Separator character used for parsing networks from the external file 
+specified by `network_path`. Defaults to newline `\n` character.
+
+[id="plugins-{type}s-{plugin}-refresh_interval"]
+===== `refresh_interval`
+
+  * Value type is <<number,number>>
+  * Default value is `600`
+
+When using an external file, this setting will indicate how frequently
+(in seconds) logstash will check the file for updates.
 
 
 [id="plugins-{type}s-{plugin}-common-options"]
