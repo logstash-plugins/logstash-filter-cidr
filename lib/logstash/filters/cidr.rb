@@ -101,10 +101,10 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     begin
       temporary = File.open(@network_path, "r") {|file| file.read.split(@separator)}
       if !temporary.empty? #ensuring the file was parsed correctly
-        @network = temporary
+        @network_list = temporary
       end
     rescue
-      if @network
+      if @network_list #if the list was parsed successfully before
         @logger.error("Error while opening/parsing the file")
       else
         raise LogStash::ConfigurationError, I18n.t(
@@ -139,7 +139,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
         end #end lock
       end #end refresh from file
  
-      network = @network.collect do |n|
+      network = @network_list.collect do |n|
         begin
           lock_for_read do
             IPAddr.new(n)
