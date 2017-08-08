@@ -18,7 +18,7 @@ describe LogStash::Filters::CIDR do
     CONFIG
 
     sample("clientip" => "192.168.0.30") do
-      insist { subject.get("tags") }.include?("matched") 
+      insist { subject.get("tags") }.include?("matched")
     end
   end
 
@@ -34,7 +34,7 @@ describe LogStash::Filters::CIDR do
     CONFIG
 
     sample("clientip" => "123.52.122.33") do
-       insist { subject.get("tags") }.nil?
+      insist { subject.get("tags") }.nil?
     end
   end
 
@@ -101,10 +101,10 @@ describe LogStash::Filters::CIDR do
     CONFIG
 
     sample("clientip" => "fd82:0:0:0:0:0:0:1") do
-       insist { subject.get("tags") }.nil?
+      insist { subject.get("tags") }.nil?
     end
   end
-  
+
   describe "Load network list from a file" do
 
     let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network")}
@@ -115,7 +115,7 @@ describe LogStash::Filters::CIDR do
     sample("clientip" => "192.168.1.1") do
       insist { subject.get("tags") }.include?("matched")
     end
-    
+
     sample("clientip" => "200.17.160.201") do
       insist { subject.get("tags") }.include?("matched")
     end
@@ -124,7 +124,7 @@ describe LogStash::Filters::CIDR do
       insist { subject.get("tags").nil? }
     end
   end
-   
+
   describe "Try different separator character" do
 
     let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network-comma")}

@@ -36,8 +36,8 @@ This plugin supports the following configuration options plus the <<plugins-{typ
 | <<plugins-{type}s-{plugin}-address>> |<<array,array>>|No
 | <<plugins-{type}s-{plugin}-network>> |<<array,array>>|No
 | <<plugins-{type}s-{plugin}-network_path>> |a valid filesystem path|No
-| <<plugins-{type}s-{plugin}-separator>> |<<string,string>>|No
 | <<plugins-{type}s-{plugin}-refresh_interval>>| <<number,number>>|No
+| <<plugins-{type}s-{plugin}-separator>> |<<string,string>>|No
 |=======================================================================
 
 Also see <<plugins-{type}s-{plugin}-common-options>> for a list of options supported by all
@@ -46,7 +46,7 @@ filter plugins.
 &nbsp;
 
 [id="plugins-{type}s-{plugin}-address"]
-===== `address` 
+===== `address`
 
   * Value type is <<array,array>>
   * Default value is `[]`
@@ -62,7 +62,7 @@ The IP address(es) to check with. Example:
     }
 
 [id="plugins-{type}s-{plugin}-network"]
-===== `network` 
+===== `network`
 
   * Value type is <<array,array>>
   * Default value is `[]`
@@ -91,15 +91,6 @@ Networks are separated by a separator character defined in `separator`.
     192.167.0.0/16	
 NOTE: It is an error to specify both `network` and `network_path`.
 
-[id="plugins-{type}s-{plugin}-separator"]
-===== `separator`
-
-  * Value type is <<string,string>>
-  * Default value is `\n`
-
-Separator character used for parsing networks from the external file 
-specified by `network_path`. Defaults to newline `\n` character.
-
 [id="plugins-{type}s-{plugin}-refresh_interval"]
 ===== `refresh_interval`
 
@@ -107,8 +98,17 @@ specified by `network_path`. Defaults to newline `\n` character.
   * Default value is `600`
 
 When using an external file, this setting will indicate how frequently
-(in seconds) logstash will check the file for updates.
+(in seconds) Logstash will check the file for updates.
 
+
+[id="plugins-{type}s-{plugin}-separator"]
+===== `separator`
+
+  * Value type is <<string,string>>
+  * Default value is `\n`
+
+Separator character used for parsing networks from the external file
+specified by `network_path`. Defaults to newline `\n` character.
 
 [id="plugins-{type}s-{plugin}-common-options"]
 include::{include_path}/{type}.asciidoc[]
