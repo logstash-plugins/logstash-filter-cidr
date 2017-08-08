@@ -1,3 +1,8 @@
+## 3.1.0
+ - feature: New options 'network_path', 'separator', and
+   'refresh_interval' used for optionally storing the list
+   of networks in an auto-reloaded file.
+
 ## 3.0.0
  - breaking: Updated plugin to use new Java Event APIs
 
