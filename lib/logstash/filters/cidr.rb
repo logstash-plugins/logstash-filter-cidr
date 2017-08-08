@@ -47,28 +47,30 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   # NOTE: it is an error to specify both 'network' and 'network_path'.
   config :network_path, :validate => :path
 
-  # The separator character used in the encoding of the external file pointed by network_path.
-  config :separator, :validate => :string, :default => "\n"
-
-  # When using a network list from a file, this setting will indicate how frequently
-  # (in seconds) logstash will check the file for updates.
+  # When using a network list from a file, this setting will indicate
+  # how frequently (in seconds) Logstash will check the file for
+  # updates.
   config :refresh_interval, :validate => :number, :default => 600
 
+  # The separator character used in the encoding of the external file
+  # pointed by network_path.
+  config :separator, :validate => :string, :default => "\n"
+
   public
-  def register    
+  def register
     rw_lock = java.util.concurrent.locks.ReentrantReadWriteLock.new
     @read_lock = rw_lock.readLock
     @write_lock = rw_lock.writeLock
 
     if @network_path && !@network.empty? #checks if both network and network path are defined in configuration options
       raise LogStash::ConfigurationError, I18n.t(
-      "logstash.agent.configuration.invalid_plugin_register",
-      :plugin => "filter",
-      :type => "cidr",
-      :error => "The configuration options 'network' and 'network_path' are mutually exclusive"
+        "logstash.agent.configuration.invalid_plugin_register",
+        :plugin => "filter",
+        :type => "cidr",
+        :error => "The configuration options 'network' and 'network_path' are mutually exclusive"
       )
     end
- 
+
     if @network_path
       @next_refresh = Time.now + @refresh_interval
       lock_for_write { load_file }
@@ -116,7 +118,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
       end
     end
   end #def load_file
-  
+
   public
   def filter(event)
     address = @address.collect do |a|
@@ -138,7 +140,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
           end
         end #end lock
       end #end refresh from file
- 
+
       network = @network_list.collect do |n|
         begin
           lock_for_read do
@@ -161,7 +163,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
         end
       end
     end
-    
+
     network.compact! #clean nulls
     # Try every combination of address and network, first match wins
     address.product(network).each do |a, n|
