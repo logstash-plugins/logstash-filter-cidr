@@ -1,15 +1,19 @@
 # encoding: utf-8
 require "logstash/filters/base"
 require "logstash/namespace"
-require "ipaddr"
+require "logstash-filter-cidr_jars"
 
 # The CIDR filter is for checking IP addresses in events against a list of
 # network blocks that might contain it. Multiple addresses can be checked
 # against multiple networks, any match succeeds. Upon success additional tags
 # and/or fields can be added to the event.
-java_import 'java.util.concurrent.locks.ReentrantReadWriteLock'
+
 
 class LogStash::Filters::CIDR < LogStash::Filters::Base
+  java_import com.github.veqryn.net.Ip4
+  java_import com.github.veqryn.net.Cidr4
+  java_import com.github.veqryn.collect.Cidr4Trie
+  java_import java.util.concurrent.locks.ReentrantReadWriteLock
 
   config_name "cidr"
 
@@ -58,9 +62,10 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   public
   def register
-    rw_lock = java.util.concurrent.locks.ReentrantReadWriteLock.new
+    rw_lock = ReentrantReadWriteLock.new
     @read_lock = rw_lock.readLock
     @write_lock = rw_lock.writeLock
+    @network_trie = Cidr4Trie.new
 
     if @network_path && !@network.empty? #checks if both network and network path are defined in configuration options
       raise LogStash::ConfigurationError, I18n.t(
@@ -71,11 +76,25 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
       )
     end
 
-    if @network_path
-      @next_refresh = Time.now + @refresh_interval
-      lock_for_write { load_file }
-    end
+    lock_for_write do
+      if @network_path
+        load_file
+      else
+        load_inline
+      end
+    end # end lock
   end # def register
+
+  def check_for_refresh
+    if @network_path
+      # double-checked locking pattern
+      if needs_refresh?
+        lock_for_write do
+          if needs_refresh?
+            load_file
+          end
+        end #end lock
+      end #end refresh from file
 
   def lock_for_write
     @write_lock.lock
@@ -99,79 +118,56 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     @next_refresh < Time.now
   end # def needs_refresh
 
+  def load_inline
+    load_trie(@network)
+  end # def load_inline
+
   def load_file
+    @next_refresh = Time.now() + @refresh_interval
     begin
       temporary = File.open(@network_path, "r") {|file| file.read.split(@separator)}
       if !temporary.empty? #ensuring the file was parsed correctly
-        @network_list = temporary
+        load_trie(temporary)
       end
     rescue
-      if @network_list #if the list was parsed successfully before
-        @logger.error("Error while opening/parsing the file")
+      if !@network_trie.empty? #if the list was parsed successfully before
+        @logger.error("Error while refreshing network list file")
       else
         raise LogStash::ConfigurationError, I18n.t(
           "logstash.agent.configuration.invalid_plugin_register",
           :plugin => "filter",
           :type => "cidr",
-          :error => "The file containing the network list is invalid, please check the separator character or permissions for the file."
+          :error => "Network list file is invalid, please check the separator character or permissions for the file."
         )
       end
     end
   end #def load_file
 
+  def load_trie(networks)
+    @network_trie.clear
+    networks.each do |n|
+      begin
+        @network_trie.put(Cidr4.new(n), n)
+      rescue Java::JavaLang::IllegalArgumentException
+        @logger.warn("Invalid IP network, skipping", :network => n)
+      end
+    end
+  end # def load_trie
+
   public
   def filter(event)
-    address = @address.collect do |a|
+    check_for_refresh
+    @address.each do |a|
       begin
-        IPAddr.new(event.sprintf(a))
-      rescue ArgumentError => e
+        ip = Ip4.new(event.sprintf(a))
+        lock_for_read do
+          prefix = @network_trie.shortestPrefixOfValue(ip, true):
+        end
+        if prefix
+          filter_matched(event)
+          return
+      rescue Java::JavaLang::IllegalArgumentException => e
         @logger.warn("Invalid IP address, skipping", :address => a, :event => event)
-        nil
-      end
-    end
-    address.compact!
-
-    if @network_path #in case we are getting networks from an external file
-      if needs_refresh?
-        lock_for_write do
-          if needs_refresh?
-            load_file
-            @next_refresh = Time.now() + @refresh_interval
-          end
-        end #end lock
-      end #end refresh from file
-
-      network = @network_list.collect do |n|
-        begin
-          lock_for_read do
-            IPAddr.new(n)
-          end
-        rescue ArgumentError => e
-          @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
-          nil
-        end
-      end
-
-    else #networks come from array in config file
-
-      network = @network.collect do |n|
-        begin
-          IPAddr.new(event.sprintf(n))
-        rescue ArgumentError => e
-          @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
-          nil
-        end
-      end
-    end
-
-    network.compact! #clean nulls
-    # Try every combination of address and network, first match wins
-    address.product(network).each do |a, n|
-      @logger.debug("Checking IP inclusion", :address => a, :network => n)
-      if n.include?(a)
-        filter_matched(event)
-        return
-      end
     end
   end # def filter
 end # class LogStash::Filters::CIDR
