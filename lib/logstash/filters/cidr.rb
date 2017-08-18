@@ -17,7 +17,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   config_name "cidr"
 
-  # The IP address(es) to check with. Example:
+  # The IPv4 address(es) to check with. Example:
   # [source,ruby]
   #     filter {
   #       %PLUGIN% {
@@ -28,18 +28,18 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #     }
   config :address, :validate => :array, :default => []
 
-  # The IP network(s) to check against. Example:
+  # The IPv4 network(s) to check against. Example:
   # [source,ruby]
   #     filter {
   #       %PLUGIN% {
   #         add_tag => [ "linklocal" ]
   #         address => [ "%{clientip}" ]
-  #         network => [ "169.254.0.0/16", "fe80::/64" ]
+  #         network => [ "169.254.0.0/16", "10.0.0.0/8" ]
   #       }
   #     }
   config :network, :validate => :array, :default => []
 
-  # The full path of the external file containing the IP network(s) to check against. Example:
+  # The full path of the external file containing the IPv4 network(s) to check against. Example:
   # [source,ruby]
   #     filter {
   #       %PLUGIN% {
@@ -86,15 +86,14 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   end # def register
 
   def check_for_refresh
-    if @network_path
-      # double-checked locking pattern
-      if needs_refresh?
-        lock_for_write do
-          if needs_refresh?
-            load_file
-          end
-        end #end lock
-      end #end refresh from file
+    if @network_path and needs_refresh?
+      lock_for_write do
+        if needs_refresh?
+          load_file
+        end
+      end # end lock
+    end
+  end # def check_for_refresh
 
   def lock_for_write
     @write_lock.lock
@@ -160,14 +159,17 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     @address.each do |a|
       begin
         ip = Ip4.new(event.sprintf(a))
+        prefix = nil
         lock_for_read do
-          prefix = @network_trie.shortestPrefixOfValue(ip, true):
-        end
+          prefix = @network_trie.shortestPrefixOfValue(ip.getCidr, true)
+        end # end lock
         if prefix
           filter_matched(event)
           return
+        end
       rescue Java::JavaLang::IllegalArgumentException => e
         @logger.warn("Invalid IP address, skipping", :address => a, :event => event)
+      end
     end
   end # def filter
 end # class LogStash::Filters::CIDR

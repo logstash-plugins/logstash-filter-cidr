@@ -71,40 +71,6 @@ describe LogStash::Filters::CIDR do
 
   end
 
-  # IPV6
-
-  describe "IPV6 match test" do
-    config <<-CONFIG
-      filter {
-        cidr {
-          address => [ "%{clientip}" ]
-          network => [ "fe80::/64" ]
-          add_tag => [ "matched" ]
-        }
-      }
-    CONFIG
-
-    sample("clientip" => "fe80:0:0:0:0:0:0:1") do
-      insist { subject.get("tags") }.include?("matched")
-    end
-  end
-
-  describe "IPV6 non match" do
-   config <<-CONFIG
-       filter {
-        cidr {
-          address => [ "%{clientip}" ]
-          network => [ "fe80::/64" ]
-          add_tag => [ "matched" ]
-        }
-      }
-    CONFIG
-
-    sample("clientip" => "fd82:0:0:0:0:0:0:1") do
-      insist { subject.get("tags") }.nil?
-    end
-  end
-
   describe "Load network list from a file" do
 
     let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network")}
