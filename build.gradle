@@ -45,11 +45,13 @@ repositories {
 dependencies {
   compileOnly group: "org.apache.logging.log4j", name: "log4j-api", version: "2.6.2"
   compileOnly group: "org.apache.logging.log4j", name: "log4j-core", version: "2.6.2"
-  compileOnly group: "cidr-ip-trie", name: "cidr-ip-trie", version: "1.0.1"
+  compileOnly group: "com.github.veqryn", name: "cidr-ip-trie", version: "1.0.1"
 
   compileOnly 'com.fasterxml.jackson.core:jackson-core:2.7.4'
   compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.7.4'
   compileOnly 'com.fasterxml.jackson.module:jackson-module-afterburner:2.7.4'
+
+  runtime group: "com.github.veqryn", name: "cidr-ip-trie", version: "1.0.1"
 
   testCompile group: 'junit', name: 'junit', version: '4.12'
   testCompile group: "org.apache.logging.log4j", name: "log4j-api", version: "2.6.2"
