@@ -145,10 +145,20 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   def load_trie(networks)
     @network_trie.clear
     networks.each do |n|
+      # Try to parse each entry as a Cidr4, falling back to 
+      # Ip4 and converting to Cidr4 before giving up and logging a warning.
+      cidr = nil
       begin
-        @network_trie.put(Cidr4.new(n), n)
+        cidr = Cidr4.new(n)
       rescue Java::JavaLang::IllegalArgumentException
-        @logger.warn("Invalid IP network, skipping", :network => n)
+        begin
+          cidr = Ip4.new(n).getCidr
+        rescue Java::JavaLang::IllegalArgumentException
+          @logger.warn("Invalid IP network, skipping", :network => n)
+        end
+      end
+      if cidr
+        @network_trie.put(cidr, n)
       end
     end
   end # def load_trie
