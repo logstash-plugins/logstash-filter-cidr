@@ -1,10 +1,10 @@
 Gem::Specification.new do |s|
 
   s.name            = 'logstash-filter-cidr'
-  s.version         = '3.1.1'
+  s.version         = '3.1.2'
   s.platform        = 'java'
   s.licenses        = ['Apache License (2.0)']
-  s.summary         = "The CIDR filter is for checking IP addresses in events against a list of network blocks that might contain it."
+  s.summary         = "Checks IP addresses against a list of network blocks"
   s.description     = "This gem is a Logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/logstash-plugin install gemname. This gem is not a stand-alone program"
   s.authors         = ["Elastic"]
   s.email           = 'info@elastic.co'
