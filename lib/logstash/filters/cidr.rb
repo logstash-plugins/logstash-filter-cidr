@@ -74,6 +74,14 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     if @network_path
       @next_refresh = Time.now + @refresh_interval
       lock_for_write { load_file }
+    else
+      @network = @network.collect do |n|
+        begin
+          IPAddr.new(n)
+        rescue ArgumentError => e
+          @logger.warn("Invalid IP network, skipping", :network => n)
+        end
+      end
     end
   end # def register
 
@@ -131,6 +139,8 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     end
     address.compact!
 
+    network = @network
+
     if @network_path #in case we are getting networks from an external file
       if needs_refresh?
         lock_for_write do
@@ -146,17 +156,6 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
           lock_for_read do
             IPAddr.new(n)
           end
-        rescue ArgumentError => e
-          @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
-          nil
-        end
-      end
-
-    else #networks come from array in config file
-
-      network = @network.collect do |n|
-        begin
-          IPAddr.new(event.sprintf(n))
         rescue ArgumentError => e
           @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
           nil
