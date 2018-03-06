@@ -75,7 +75,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
       @next_refresh = Time.now + @refresh_interval
       lock_for_write { load_file }
     else
-      @network = @network.collect do |n|
+      @network_list = @network.collect do |n|
         begin
           IPAddr.new(n)
         rescue ArgumentError => e
@@ -139,7 +139,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     end
     address.compact!
 
-    network = @network
+    network = @network_list
 
     if @network_path #in case we are getting networks from an external file
       if needs_refresh?
