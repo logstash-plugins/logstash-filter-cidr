@@ -125,7 +125,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
       begin
         IPAddr.new(event.sprintf(a))
       rescue ArgumentError => e
-        @logger.warn("Invalid IP address, skipping", :address => a, :event => event)
+        @logger.warn("Invalid IP address, skipping", :address => a, :event => event.to_hash)
         nil
       end
     end
@@ -147,18 +147,18 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
             IPAddr.new(n)
           end
         rescue ArgumentError => e
-          @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
+          @logger.warn("Invalid IP network, skipping", :network => n, :event => event.to_hash)
           nil
         end
       end
 
     else #networks come from array in config file
 
-      network = @network.collect do |n|
+      network = @network.map {|nw| event.sprintf(nw) }.map {|nw| nw.split(",") }.flatten.collect do |n|
         begin
-          IPAddr.new(event.sprintf(n))
+          IPAddr.new(n.strip)
         rescue ArgumentError => e
-          @logger.warn("Invalid IP network, skipping", :network => n, :event => event)
+          @logger.warn("Invalid IP network, skipping", :network => n, :event => event.to_hash)
           nil
         end
       end
