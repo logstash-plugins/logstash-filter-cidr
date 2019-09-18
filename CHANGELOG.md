@@ -1,3 +1,6 @@
+## 3.1.3
+  - Support string arrays in network setting
+
 ## 3.1.2
   - Update gemspec summary
 

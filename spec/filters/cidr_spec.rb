@@ -70,6 +70,37 @@ describe LogStash::Filters::CIDR do
     end
 
   end
+  describe "IPV4 match, passing a string with a list to network" do
+   config <<-CONFIG
+       filter {
+        cidr {
+          address => [ "%{clientip}"]
+          network => [ "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"]
+          add_tag => [ "matched" ]
+        }
+      }
+    CONFIG
+
+    sample("clientip" => "192.168.0.30") do
+      insist { subject.get("tags") }.include?("matched")
+    end
+
+    context "when network list comes in a field reference" do
+      config <<-CONFIG
+          filter {
+           cidr {
+             address => [ "%{clientip}"]
+             network => [ "%{whitelist}"]
+             add_tag => [ "matched" ]
+           }
+         }
+      CONFIG
+      sample("whitelist" => [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"], "clientip" => "192.168.0.30") do
+        insist { subject.get("tags") }.include?("matched")
+      end
+    end
+  end
+
 
   # IPV6
 
