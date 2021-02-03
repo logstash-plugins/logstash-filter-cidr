@@ -22,7 +22,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #         network => [ "192.0.2.0/24" ]
   #       }
   #     }
-  config :address, :validate => :array, :default => []
+  config :address, :validate => :array, :default => [], :required => true
 
   # The IP network(s) to check against. Example:
   # [source,ruby]
