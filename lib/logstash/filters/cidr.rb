@@ -163,9 +163,9 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
         end
       end
     end
+    network.compact! #clean nulls
     # Sort the array by most restrictive cidr first
     network = network.sort_by{  |net| -net.prefix() }
-    network.compact! #clean nulls
     # Try every combination of address and network, first match wins
     address.product(network).each do |a, n|
       @logger.debug("Checking IP inclusion", :address => a, :network => n)
