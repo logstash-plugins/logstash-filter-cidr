@@ -2,6 +2,7 @@
 require "logstash/filters/base"
 require "logstash/namespace"
 require "ipaddr"
+require "json"
 
 # The CIDR filter is for checking IP addresses in events against a list of
 # network blocks that might contain it. Multiple addresses can be checked
@@ -33,7 +34,49 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #         network => [ "169.254.0.0/16", "fe80::/64" ]
   #       }
   #     }
-  config :network, :validate => :array, :default => []
+  config :network, :validate => :array || :hash , :default => []
+  
+  # The type of data in the external file containing the IP network(s) to check against. Can be "Array" or "Hash". 
+  # If set to "Hash", file must be json formatted. Does nothing unless network_path is set. Example:
+  # [source,ruby]
+  #     filter {
+  #       %PLUGIN% {
+  #         add_tag => [ "linklocal" ]
+  #         address => [ "%{clientip}" ]
+  #         network_type => "Hash"
+  #         network_path => "/etc/logstash/networks.json"
+  #       }
+  #     }
+  config :network_type, :validate => :string, :default => "Array"
+
+  # Return the data corresponding to the network(s) Hash(es). 
+  # If set to true, corresponding hash will be returned to a specified field, or "result" if none are specified. Does nothing unless network_type is Hash. Example:
+  # [source,ruby]
+  #     filter {
+  #       %PLUGIN% {
+  #         add_tag => [ "linklocal" ]
+  #         address => [ "%{clientip}" ]
+  #         network_type => "Hash"
+  #         network_path => "/etc/logstash/networks.json"
+  #         network_return => true
+  #       }
+  #     }
+  config :network_return, :validate => :boolean, :default => false
+
+  # The field with which to return the data corresponding to the network(s) Hash(es). 
+  # If set, corresponding hash will be returned to a specified field, "result" if not specified. Does nothing unless network_type is Hash. Example:
+  # [source,ruby]
+  #     filter {
+  #       %PLUGIN% {
+  #         add_tag => [ "linklocal" ]
+  #         address => [ "%{clientip}" ]
+  #         network_type => "Hash"
+  #         network_path => "/etc/logstash/networks.json"
+  #         network_return => true
+  #         target => "FieldName"
+  #       }
+  #     }
+  config :target, :validate => :string, :default => "result"
 
   # The full path of the external file containing the IP network(s) to check against. Example:
   # [source,ruby]
@@ -100,22 +143,50 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   end # def needs_refresh
 
   def load_file
-    begin
-      temporary = File.open(@network_path, "r") {|file| file.read.split(@separator)}
-      if !temporary.empty? #ensuring the file was parsed correctly
-        @network_list = temporary
+    if @network_type.eql?("Hash")
+      begin
+        json_temporary = File.read(@network_path)
+	temporary = JSON.parse(json_temporary)
+        if !temporary.empty? #ensuring the file was parsed correctly
+          @network_list = temporary
+        end
+      rescue
+        if @network_list #if the list was parsed successfully before
+          @logger.error("Error while opening/parsing the file")
+        else
+          raise LogStash::ConfigurationError, I18n.t(
+            "logstash.agent.configuration.invalid_plugin_register",
+            :plugin => "filter",
+            :type => "cidr",
+            :error => "The file containing the network list is invalid, please check the separator character or permissions for the file."
+          )
+        end
       end
-    rescue
-      if @network_list #if the list was parsed successfully before
-        @logger.error("Error while opening/parsing the file")
-      else
-        raise LogStash::ConfigurationError, I18n.t(
-          "logstash.agent.configuration.invalid_plugin_register",
-          :plugin => "filter",
-          :type => "cidr",
-          :error => "The file containing the network list is invalid, please check the separator character or permissions for the file."
-        )
+    elsif @network_type.eql?("Array")
+      begin
+        temporary = File.open(@network_path, "r") {|file| file.read.split(@separator)}
+        if !temporary.empty? #ensuring the file was parsed correctly
+          @network_list = temporary
+        end
+      rescue
+        if @network_list #if the list was parsed successfully before
+          @logger.error("Error while opening/parsing the file")
+        else
+          raise LogStash::ConfigurationError, I18n.t(
+            "logstash.agent.configuration.invalid_plugin_register",
+            :plugin => "filter",
+            :type => "cidr",
+            :error => "The file containing the network list is invalid, please check the separator character or permissions for the file."
+          )
+        end
       end
+    else
+      raise LogStash::ConfigurationError, I18n.t(
+        "logstash.agent.configuration.invalid_plugin_register",
+        :plugin => "filter",
+        :type => "cidr",
+        :error => "When defining network_type, value must be one of Array or Hash."
+      )
     end
   end #def load_file
 
@@ -140,28 +211,51 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
           end
         end #end lock
       end #end refresh from file
-
-      network = @network_list.collect do |n|
-        begin
-          lock_for_read do
-            IPAddr.new(n)
+      if @network_type.eql?("Hash")
+	network = @network_list.keys.collect do |n|
+          begin
+            lock_for_read do
+              IPAddr.new(n)
+            end
+          rescue ArgumentError => e
+            @logger.warn("Invalid IP network, skipping", :network => n, :event => event.to_hash)
+            nil
           end
-        rescue ArgumentError => e
-          @logger.warn("Invalid IP network, skipping", :network => n, :event => event.to_hash)
-          nil
+        end
+      
+      elsif @network_type.eql?("Array")
+        network = @network_list.collect do |n|
+          begin
+            lock_for_read do
+              IPAddr.new(n)
+            end
+          rescue ArgumentError => e
+            @logger.warn("Invalid IP network, skipping", :network => n, :event => event.to_hash)
+            nil
+          end
         end
       end
-
     else #networks come from array in config file
-
-      network = @network.map {|nw| event.sprintf(nw) }.map {|nw| nw.split(",") }.flatten.collect do |n|
-        begin
-          IPAddr.new(n.strip)
-        rescue ArgumentError => e
-          @logger.warn("Invalid IP network, skipping", :network => n, :event => event.to_hash)
-          nil
+      if @network.is_a?(Hash)
+        network = @network.keys {|nw| event.sprintf(nw) }.map {|nw| nw.split(",") }.flatten.collect do |n|
+          begin
+            IPAddr.new(n.strip)
+          rescue ArgumentError => e
+            @logger.warn("Invalid IP network, skipping", :network => n, :event => event.to_hash)
+            nil
+          end
+        end
+      elsif @network.is_a?(Array)
+        network = @network.map {|nw| event.sprintf(nw) }.map {|nw| nw.split(",") }.flatten.collect do |n|
+          begin
+            IPAddr.new(n.strip)
+          rescue ArgumentError => e
+            @logger.warn("Invalid IP network, skipping", :network => n, :event => event.to_hash)
+            nil
+          end
         end
       end
+      network = network.sort_by{ |net| -net.prefix() }
     end
 
     network.compact! #clean nulls
@@ -169,8 +263,19 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     address.product(network).each do |a, n|
       @logger.debug("Checking IP inclusion", :address => a, :network => n)
       if n.include?(a)
-        filter_matched(event)
-        return
+	if (@network.is_a?(Hash) || @network_list.is_a?(Hash)) and @network_return
+	  if @network.is_a?(Hash)
+	    val = @network["#{n.to_s}/#{n.prefix()}"]
+	  elsif @network_list.is_a?(Hash)
+	    val = @network_list["#{n.to_s}/#{n.prefix()}"]
+	  end
+	  event.set(@target, val)
+          filter_matched(event)
+          return
+	else
+          filter_matched(event)
+          return
+	end
       end
     end
   end # def filter
