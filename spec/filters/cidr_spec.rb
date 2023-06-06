@@ -18,7 +18,7 @@ describe LogStash::Filters::CIDR do
       }
     CONFIG
 
-    sample("clientip" => "192.168.0.30") do
+    sample({"clientip" => "192.168.0.30"}) do
       insist { subject.get("tags") }.include?("matched")
     end
   end
@@ -34,7 +34,7 @@ describe LogStash::Filters::CIDR do
       }
     CONFIG
 
-    sample("clientip" => "123.52.122.33") do
+    sample({"clientip" => "123.52.122.33"}) do
       insist { subject.get("tags") }.nil?
     end
   end
@@ -53,20 +53,20 @@ describe LogStash::Filters::CIDR do
       }
     CONFIG
 
-    sample("clientip" => "192.168.0.30") do
+    sample({"clientip" => "192.168.0.30"}) do
       insist { subject.get("tags") }.include?("matched")
     end
 
-    sample("clientip" => "10.10.220.3") do
+    sample({"clientip" => "10.10.220.3"}) do
       insist { subject.get("tags") }.include?("matched")
     end
 
-    sample("clientip" => "172.16.45.50") do
+    sample({"clientip" => "172.16.45.50"}) do
       insist { subject.get("tags") }.include?("matched")
     end
 
     # No match
-    sample("clientip" => "8.8.8.8") do
+    sample({"clientip" => "8.8.8.8"}) do
       insist { subject.get("tags") }.nil?
     end
 
@@ -82,7 +82,7 @@ describe LogStash::Filters::CIDR do
       }
     CONFIG
 
-    sample("clientip" => "192.168.0.30") do
+    sample({"clientip" => "192.168.0.30"}) do
       insist { subject.get("tags") }.include?("matched")
     end
 
@@ -96,7 +96,7 @@ describe LogStash::Filters::CIDR do
            }
          }
       CONFIG
-      sample("whitelist" => [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"], "clientip" => "192.168.0.30") do
+      sample({"whitelist" => [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"], "clientip" => "192.168.0.30"}) do
         insist { subject.get("tags") }.include?("matched")
       end
     end
@@ -116,7 +116,7 @@ describe LogStash::Filters::CIDR do
       }
     CONFIG
 
-    sample("clientip" => "fe80:0:0:0:0:0:0:1") do
+    sample({"clientip" => "fe80:0:0:0:0:0:0:1"}) do
       insist { subject.get("tags") }.include?("matched")
     end
   end
@@ -132,7 +132,7 @@ describe LogStash::Filters::CIDR do
       }
     CONFIG
 
-    sample("clientip" => "fd82:0:0:0:0:0:0:1") do
+    sample({"clientip" => "fd82:0:0:0:0:0:0:1"}) do
       insist { subject.get("tags") }.nil?
     end
   end
@@ -144,15 +144,15 @@ describe LogStash::Filters::CIDR do
       "filter { cidr { network_path => \"#{network_path}\" address => \"%{clientip}\" add_tag => \[\"matched\"] }}"
     end
 
-    sample("clientip" => "192.168.1.1") do
+    sample({"clientip" => "192.168.1.1"}) do
       insist { subject.get("tags") }.include?("matched")
     end
 
-    sample("clientip" => "200.17.160.201") do
+    sample({"clientip" => "200.17.160.201"}) do
       insist { subject.get("tags") }.include?("matched")
     end
 
-    sample("clientip" => "10.1.2.1") do
+    sample({"clientip" => "10.1.2.1"}) do
       insist { subject.get("tags").nil? }
     end
   end
@@ -164,11 +164,11 @@ describe LogStash::Filters::CIDR do
       "filter { cidr { network_path => \"#{network_path}\" address => \"%{clientip}\" add_tag => \[\"matched\"] separator => \",\" }}"
     end
 
-    sample("clientip" => "192.168.1.25") do
+    sample({"clientip" => "192.168.1.25"}) do
       insist { subject.get("tags").include?("matched")}
     end
 
-    sample("clientip" => "192.167.1.1") do
+    sample({"clientip" => "192.167.1.1"}) do
       insist { subject.get("tags").nil? }
     end
 
