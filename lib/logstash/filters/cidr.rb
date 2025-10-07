@@ -2,6 +2,7 @@
 require "logstash/filters/base"
 require "logstash/namespace"
 require "ipaddr"
+require 'logstash/plugin_mixins/validator_support/field_reference_validation_adapter'
 
 # The CIDR filter is for checking IP addresses in events against a list of
 # network blocks that might contain it. Multiple addresses can be checked
@@ -10,8 +11,20 @@ require "ipaddr"
 java_import 'java.util.concurrent.locks.ReentrantReadWriteLock'
 
 class LogStash::Filters::CIDR < LogStash::Filters::Base
-
   config_name "cidr"
+
+  extend LogStash::PluginMixins::ValidatorSupport::FieldReferenceValidationAdapter
+
+  # The IP address(es) to check with, as a field reference. Example:
+  # [source,ruby]
+  #     filter {
+  #       %PLUGIN% {
+  #         add_tag => [ "testnet" ]
+  #         address_field => "[host][ip]"
+  #         network => [ "192.0.2.0/24" ]
+  #       }
+  #     }
+  config :address_field, :validate => :field_reference
 
   # The IP address(es) to check with. Example:
   # [source,ruby]
@@ -71,6 +84,15 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
       )
     end
 
+    if @address_field && !@address.empty? #checks if both address and address_field are defined in configuration options
+      raise LogStash::ConfigurationError, I18n.t(
+        "logstash.agent.configuration.invalid_plugin_register",
+        :plugin => "filter",
+        :type => "cidr",
+        :error => "The configuration options 'address' and 'address_field' are mutually exclusive"
+      )
+    end
+
     if @network_path
       @next_refresh = Time.now + @refresh_interval
       lock_for_write { load_file }
@@ -121,15 +143,14 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   public
   def filter(event)
-    address = @address.collect do |a|
+    ips = get_addresses(event).inject([]) do |ips, a|
       begin
-        IPAddr.new(event.sprintf(a))
+        ips << IPAddr.new(a)
       rescue ArgumentError => e
         @logger.warn("Invalid IP address, skipping", :address => a, :event => event.to_hash)
-        nil
       end
+      ips
     end
-    address.compact!
 
     if @network_path #in case we are getting networks from an external file
       if needs_refresh?
@@ -166,7 +187,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
     network.compact! #clean nulls
     # Try every combination of address and network, first match wins
-    address.product(network).each do |a, n|
+    ips.product(network).each do |a, n|
       @logger.debug("Checking IP inclusion", :address => a, :network => n)
       if n.include?(a)
         filter_matched(event)
@@ -174,4 +195,13 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
       end
     end
   end # def filter
+
+  private
+  def get_addresses(event)
+    if @address_field
+      Array(event.get(@address_field))
+    else
+      @address.collect { |a| event.sprintf(a) }
+    end
+  end
 end # class LogStash::Filters::CIDR
