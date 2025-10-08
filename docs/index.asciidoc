@@ -34,6 +34,7 @@ This plugin supports the following configuration options plus the <<plugins-{typ
 |=======================================================================
 |Setting |Input type|Required
 | <<plugins-{type}s-{plugin}-address>> |<<array,array>>|No
+| <<plugins-{type}s-{plugin}-address_field>> |<<string,string>>|No
 | <<plugins-{type}s-{plugin}-network>> |<<array,array>>|No
 | <<plugins-{type}s-{plugin}-network_path>> |a valid filesystem path|No
 | <<plugins-{type}s-{plugin}-refresh_interval>>| <<number,number>>|No
@@ -57,6 +58,22 @@ The IP address(es) to check with. Example:
       cidr {
         add_tag => [ "testnet" ]
         address => [ "%{src_ip}", "%{dst_ip}" ]
+        network => [ "192.0.2.0/24" ]
+      }
+    }
+
+[id="plugins-{type}s-{plugin}-address_field"]
+===== `address_field`
+
+  * Value type is <<string,string>>
+  * There is no default value for this setting.
+
+The field containing IP address(es) to check with. Example:
+[source,ruby]
+    filter {
+      cidr {
+        add_tag => [ "testnet" ]
+        address_field => "[host][ip]"
         network => [ "192.0.2.0/24" ]
       }
     }
