@@ -15,17 +15,6 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   extend LogStash::PluginMixins::ValidatorSupport::FieldReferenceValidationAdapter
 
-  # The IP address(es) to check with, as a field reference. Example:
-  # [source,ruby]
-  #     filter {
-  #       %PLUGIN% {
-  #         add_tag => [ "testnet" ]
-  #         address_field => "[host][ip]"
-  #         network => [ "192.0.2.0/24" ]
-  #       }
-  #     }
-  config :address_field, :validate => :field_reference
-
   # The IP address(es) to check with. Example:
   # [source,ruby]
   #     filter {
@@ -36,6 +25,17 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
   #       }
   #     }
   config :address, :validate => :array, :default => []
+
+  # The field containing IP address(es) to check with. Example:
+  # [source,ruby]
+  #     filter {
+  #       %PLUGIN% {
+  #         add_tag => [ "testnet" ]
+  #         address_field => "[host][ip]"
+  #         network => [ "192.0.2.0/24" ]
+  #       }
+  #     }
+  config :address_field, :validate => :field_reference
 
   # The IP network(s) to check against. Example:
   # [source,ruby]
