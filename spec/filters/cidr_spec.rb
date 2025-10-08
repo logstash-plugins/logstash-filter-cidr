@@ -178,14 +178,18 @@ describe LogStash::Filters::CIDR do
     let(:network_path) {File.join(File.dirname(__FILE__), "..", "files", "network")}
     let(:config) do
       {
-        "clientip"       => "192.168.1.1",
+        "address"        => [ "%{clientip}" ],
         "network"        => ["192.168.1.0/24"],
         "network_path"   => network_path,
         "add_tag"        => ["matched"]
       }
     end
+
     it "raises an exception if both 'network' and 'network_path' are set" do
-      expect { subject.register }.to raise_error(LogStash::ConfigurationError)
+      expect { subject.register }.to raise_error(
+        LogStash::ConfigurationError,
+        /The configuration options 'network' and 'network_path' are mutually exclusive/
+      )
     end
   end
 end
