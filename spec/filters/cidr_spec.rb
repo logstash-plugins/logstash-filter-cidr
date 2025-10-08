@@ -218,6 +218,12 @@ describe LogStash::Filters::CIDR do
           insist { subject.get("tags") }.include?("matched")
         end
       end
+
+      context 'the input value contains an invalid ip' do
+        sample({ "ip" => [ "invalid", "192.168.0.1" ] }) do
+          insist { subject.get("tags") }.include?("matched")
+        end
+      end
     end
 
     context 'the field is nested' do

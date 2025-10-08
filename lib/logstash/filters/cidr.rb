@@ -143,7 +143,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   public
   def filter(event)
-    ips = get_addresses(event).inject([]) do |ips, a|
+    ip_addresses = get_addresses(event).inject([]) do |ips, a|
       begin
         ips << IPAddr.new(a)
       rescue ArgumentError => e
@@ -187,7 +187,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
     network.compact! #clean nulls
     # Try every combination of address and network, first match wins
-    ips.product(network).each do |a, n|
+    ip_addresses.product(network).each do |a, n|
       @logger.debug("Checking IP inclusion", :address => a, :network => n)
       if n.include?(a)
         filter_matched(event)
