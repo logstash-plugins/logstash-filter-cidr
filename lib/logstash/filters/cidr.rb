@@ -75,7 +75,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
     @read_lock = rw_lock.readLock
     @write_lock = rw_lock.writeLock
 
-    if @network_path && !@network.empty? #checks if both network and network path are defined in configuration options
+    if @network_path && !@network.empty? # checks if both network and network path are defined in configuration options
       raise LogStash::ConfigurationError, I18n.t(
         "logstash.agent.configuration.invalid_plugin_register",
         :plugin => "filter",
@@ -84,7 +84,7 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
       )
     end
 
-    if @address_field && !@address.empty? #checks if both address and address_field are defined in configuration options
+    if @address_field && !@address.empty? # checks if both address and address_field are defined in configuration options
       raise LogStash::ConfigurationError, I18n.t(
         "logstash.agent.configuration.invalid_plugin_register",
         :plugin => "filter",
