@@ -143,13 +143,12 @@ class LogStash::Filters::CIDR < LogStash::Filters::Base
 
   public
   def filter(event)
-    ip_addresses = get_addresses(event).inject([]) do |ips, a|
+    ip_addresses = get_addresses(event).each_with_object([]) do |a, ips|
       begin
         ips << IPAddr.new(a)
       rescue ArgumentError => e
         @logger.warn("Invalid IP address, skipping", :address => a, :event => event.to_hash)
       end
-      ips
     end
 
     if @network_path #in case we are getting networks from an external file
