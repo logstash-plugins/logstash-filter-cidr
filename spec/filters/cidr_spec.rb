@@ -224,6 +224,23 @@ describe LogStash::Filters::CIDR do
           insist { subject.get("tags") }.include?("matched")
         end
       end
+      context 'the input value is not present on the event' do
+        sample({}) do
+          reject { subject.get("tags") }.include?("matched")
+        end
+      end
+
+      context 'the input value is of unacceptable shape (integer)' do
+        sample({ "ip" => 377 }) do
+          reject { subject.get("tags") }.include?("matched")
+        end
+      end
+      
+      context 'the input value is of unacceptable shape (map)' do
+        sample({ "ip" => { "invalid" => "192.168.0.1" }) do
+          reject { subject.get("tags") }.include?("matched")
+        end
+      end
     end
 
     context 'the field is nested' do
