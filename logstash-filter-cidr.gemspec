@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
 
   s.name            = 'logstash-filter-cidr'
-  s.version         = '3.1.3'
+  s.version         = '3.2.0'
   s.platform        = 'java'
   s.licenses        = ['Apache License (2.0)']
   s.summary         = "Checks IP addresses against a list of network blocks"
