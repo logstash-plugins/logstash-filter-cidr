@@ -1,3 +1,6 @@
+## 3.2.0
+  - feature: Add address_field config option to handle nested fields
+
 ## 3.1.3
   - Support string arrays in network setting
 
