@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
 
   s.name            = 'logstash-filter-cidr'
-  s.version         = '3.1.3'
+  s.version         = '3.2.0'
   s.platform        = 'java'
   s.licenses        = ['Apache License (2.0)']
   s.summary         = "Checks IP addresses against a list of network blocks"
@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
 
   # Gem dependencies
   s.add_runtime_dependency "logstash-core-plugin-api", ">= 1.60", "<= 2.99"
+  s.add_runtime_dependency 'logstash-mixin-validator_support', '~>1.0'
 
   s.add_development_dependency 'logstash-devutils'
   s.add_development_dependency 'insist'

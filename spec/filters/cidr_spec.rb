@@ -192,4 +192,90 @@ describe LogStash::Filters::CIDR do
       )
     end
   end
+
+  describe "address_field config option" do
+
+    context 'the field is top-level' do
+
+      config <<-CONFIG
+        filter {
+          cidr {
+            address_field => "ip"
+            network => [ "192.168.0.0/24" ]
+            add_tag => [ "matched" ]
+          }
+        }
+      CONFIG
+
+      context 'the input value is a string' do
+        sample({ "ip" => "192.168.0.1" }) do
+          insist { subject.get("tags") }.include?("matched")
+        end
+      end
+
+      context 'the input value is an array' do
+        sample({ "ip" => [ "188.168.0.1", "192.168.0.1" ] }) do
+          insist { subject.get("tags") }.include?("matched")
+        end
+      end
+
+      context 'the input value contains an invalid ip' do
+        sample({ "ip" => [ "invalid", "192.168.0.1" ] }) do
+          insist { subject.get("tags") }.include?("matched")
+        end
+      end
+
+      context 'the input value is not present on the event' do
+        sample({}) do
+          insist { subject.get("tags").nil? }
+        end
+      end
+
+      context 'the input value is of unacceptable shape (integer)' do
+        sample({ "ip" => 377 }) do
+          insist { subject.get("tags").nil? }
+        end
+      end
+      
+      context 'the input value is of unacceptable shape (map)' do
+        sample({ "ip" => { "invalid" => "192.168.0.1" } }) do
+          insist { subject.get("tags").nil? }
+        end
+      end
+    end
+
+    context 'the field is nested' do
+
+      config <<-CONFIG
+        filter {
+          cidr {
+            address_field => "[host][ip]"
+            network => [ "192.168.0.0/24" ]
+            add_tag => [ "matched" ]
+          }
+        }
+      CONFIG
+
+      sample({ "host" => { "ip" => [ "188.168.0.1", "192.168.0.1" ] } }) do
+        insist { subject.get("tags") }.include?("matched")
+      end
+    end
+
+    context 'address and address_field are both defined' do
+
+      let(:config) do
+        {
+          "address_field" => "[host][ip]",
+          "address" => [ "%{clientip}" ]
+        }
+      end
+
+      it "raises an exception" do
+        expect { subject.register }.to raise_error(
+          LogStash::ConfigurationError,
+          /The configuration options 'address' and 'address_field' are mutually exclusive/
+        )
+      end
+    end
+  end
 end
